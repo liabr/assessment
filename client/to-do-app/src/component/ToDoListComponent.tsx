@@ -1,4 +1,3 @@
-// src/TodoList.tsx
 import React from 'react';
 import { Box, Typography, Button, Checkbox } from '@mui/material';
 import { Todo } from '../types';
