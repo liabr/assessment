@@ -13,7 +13,7 @@ Todo App using React, ExpressJS and In Memory DB
 
 ## Deployed with:
 
-* Deployed using Render (PostgreSQL Database, Backend Webservice & Frontend Static Site)
+* Deployed using Render (InMmeory Database, Backend Webservice & Frontend Static Site)
 
 ## Project Setup & Running:
 
