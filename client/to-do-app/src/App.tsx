@@ -1,114 +1,129 @@
-import React, { useState } from "react";
-import {
-  Container,
-  Grid,
-  Box,
-  Button,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
-import { Todo, FilterStatus, SortOption } from "./types";
-import TodoList from "./component/ToDoList";
-import TodoForm from "./component/TodoForm";
-import { v4 as uuidv4 } from "uuid";
+import React, { useState, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Container, Grid, Box, Button, Typography, FormControl, InputLabel, Select, MenuItem, ThemeProvider, createTheme } from '@mui/material';
+import { RootState } from './redux/store';
+import { createTodo, updateTodo, deleteTodo, toggleTodoComplete } from './redux/toDoSlice';
+import { Todo, FilterStatus, SortOption } from './types';
+import TodoList from './component/ToDoList';
+import TodoForm from './component/TodoForm';
+import axios from 'axios'; // Import axios for making HTTP requests
+
 
 const App: React.FC = () => {
+  const dispatch = useDispatch();
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [categories, setCategories] = useState<string[]>([
-    "Work",
-    "Personal",
-    "Shopping",
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [sortOption, setSortOption] = useState<SortOption>("dueDate");
+  const [categories, setCategories] = useState<string[]>(['Work', 'Personal', 'Shopping']);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('dueDate');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
 
-  const handleCreateTodo = (newTodo: Omit<Todo, "id" | "createdAt">) => {
-    setTodos([
-      ...todos,
-      { ...newTodo, id: uuidv4(), createdAt: new Date().toISOString() },
-    ]);
+  const toggleTheme = () => {
+    setThemeMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
-  const handleUpdateTodo = (id: string, updatedTodo: Partial<Todo>) => {
-    setTodos(
-      todos.map((todo) => (todo.id === id ? { ...todo, ...updatedTodo } : todo))
-    );
-  };
+  const theme = createTheme({
+    palette: {
+      mode: themeMode,
+    },
+  });
 
-  const handleDeleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
+  const handleCreateTodo = useCallback(async (newTodo: Omit<Todo, 'id' | 'createdAt'>) => {
+    try {
+      newTodo.text = newTodo.title;
+      const response = await axios.post('http://localhost:5000/todos', newTodo); // Call the API
 
-  const handleToggleComplete = (id: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
-  };
+      if (response.status === 201) {
+        setTodos((prevTodos) => [...prevTodos, response.data]); 
+      }
+    } catch (error) {
+      console.error('Error creating todo:', error);
+    }
+  }, []);
+
+
+  const handleUpdateTodo = useCallback(async (id: string, updatedTodo: Partial<Todo>) => {
+    try {
+      const response = await axios.put('http://localhost:5000/todos', updatedTodo); 
+      if (response.status === 200) {
+        setTodos((prevTodos) =>
+          prevTodos.map((todo) => (todo.id === id ? { ...todo, ...response.data } : todo))
+        ); 
+      }
+    } catch (error) {
+      console.error('Error updating todo:', error);
+    }
+  }, []);
+
+  // Delete Todo
+  const handleDeleteTodo = useCallback(async (id: string) => {
+    try {
+      const response = await axios.delete(`${apiUrl}/${id}`); // Delete the todo by ID
+      if (response.status === 200) {
+        setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id)); // Remove the deleted todo from state
+      }
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
+  }, []);
+
+  const handleToggleComplete = useCallback((id: string) => {
+    dispatch(toggleTodoComplete(id));
+  }, [dispatch]);
 
   const handleAddCategory = (category: string) => {
-    setCategories([...categories, category]);
+    setCategories((prevCategories) => [...prevCategories, category]);
   };
 
-  const filteredTodos = todos
-    .filter((todo) => {
-      if (filterStatus === "all") return true;
-      if (filterStatus === "active") return !todo.completed;
-      if (filterStatus === "completed") return todo.completed;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortOption === "dueDate")
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
+  const getFilteredAndSortedTodos = () => {
+    return todos
+      .filter((todo) => {
+        if (filterStatus === 'active') return !todo.completed;
+        if (filterStatus === 'completed') return todo.completed;
+        return true;
+      })
+      .filter((todo) => {
+        if (selectedCategory) return todo.category === selectedCategory;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortOption === 'dueDate') return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+  };
 
   return (
-      <Container>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "12px",
-          }}
-        >
-          <Typography variant="h4">Todo Category </Typography>
-          <Button variant="contained" onClick={() => setSelectedCategory("")}>
-            All
+    <ThemeProvider theme={theme}>
+      <Container sx={{ backgroundColor: '#f4f4f9', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+          <Typography variant="h4">Todo App</Typography>
+          <Button variant="contained" onClick={() => setSelectedCategory('')}>
+            All Todos
+          </Button>
+          <Button variant="contained" onClick={toggleTheme}>
+            Switch to {themeMode === 'light' ? 'Dark' : 'Light'} Mode
           </Button>
         </Box>
 
-        <Grid container spacing={1}>
+        <Grid container spacing={3} sx={{ flexGrow: 1 }}>
           <Grid item xs={12} md={4}>
-            <Box color={"white"} bgcolor={""} p={2}>
+            <Box sx={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '8px' }}>
               <Typography variant="h6">Categories</Typography>
-              <Button
-                variant="contained"
-                onClick={() => handleAddCategory("New Category")}
-              >
-                Add Category
-              </Button>
+              <Button variant="contained" onClick={() => handleAddCategory('New Category')}>Add Category</Button>
               <ul>
                 {categories.map((category) => (
                   <li key={category}>
-                    <Button onClick={() => setSelectedCategory(category)}>
-                      {category}
-                    </Button>
+                    <Button onClick={() => setSelectedCategory(category)}>{category}</Button>
                   </li>
                 ))}
               </ul>
             </Box>
           </Grid>
 
-          <Grid item xs={60} md={8} fullWidth fullHeight>
+          <Grid item xs={12} md={8}>
             <TodoForm categories={categories} onSubmit={handleCreateTodo} />
             <TodoList
-              todos={filteredTodos}
+              todos={getFilteredAndSortedTodos()}
               onToggleComplete={handleToggleComplete}
               onDeleteTodo={handleDeleteTodo}
               onUpdateTodo={handleUpdateTodo}
@@ -117,7 +132,7 @@ const App: React.FC = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ marginTop: "20px" }}  bgcolor={"white"}>
+        <Box sx={{ marginTop: '20px', backgroundColor: '#ffffff', padding: '16px', borderRadius: '8px' }}>
           <FormControl fullWidth>
             <InputLabel>Filter</InputLabel>
             <Select
@@ -131,7 +146,7 @@ const App: React.FC = () => {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{ marginTop: "10px" }}>
+          <FormControl fullWidth sx={{ marginTop: '10px' }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortOption}
@@ -144,6 +159,7 @@ const App: React.FC = () => {
           </FormControl>
         </Box>
       </Container>
+    </ThemeProvider>
   );
 };
 

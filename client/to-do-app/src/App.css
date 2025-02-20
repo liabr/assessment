@@ -3,19 +3,16 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-  background: white;
 }
 
 .todo-item {
   display: flex;
   justify-content: space-evenly;
-  margin-bottom: 100px;
-  background-color: white;
+  margin-bottom: 12px;
  }
  .todo-item p {
-  color: #ff7664aa;
+  color: #646cffaa;
   text-decoration: line-through;
-  background-color: white;
  }
 
 .logo {

@@ -1,100 +1,106 @@
-const express = require("express");
+const express = require('express');
+const bodyParser = require('body-parser');
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors'); // Import cors
+
 const app = express();
-const cors = require("cors");
-const pool = require("./db");
-const path = require("path");
+app.use(cors()); // Allows all domains to access the server
+app.use(bodyParser.json());
+
+let todos = [];
+
+app.post('/todos', (req, res) => {
+  const { title, description, text, dueDate, category } = req.body;
+
+  if (!text || !dueDate || !category) {
+    return res.status(400).json({ message: 'Text, DueDate, and Category are required!' });
+  }
+  
+  const newTodo = {
+    id: uuidv4(),
+    title,
+    description,
+    text,
+    dueDate,
+    category,
+    completed: false,
+    createdAt: new Date().toISOString()
+  };
+
+  todos.push(newTodo);
+  res.status(201).json(newTodo);
+});
+
+// Get all Todos
+app.get('/todos', (req, res) => {
+  const { filter, sortBy, category } = req.query;
+
+  let filteredTodos = todos;
+
+  if (category) {
+    filteredTodos = filteredTodos.filter((todo) => todo.category === category);
+  }
+
+  if (filter === 'active') {
+    filteredTodos = filteredTodos.filter((todo) => !todo.completed);
+  } else if (filter === 'completed') {
+    filteredTodos = filteredTodos.filter((todo) => todo.completed);
+  }
+
+  if (sortBy) {
+    filteredTodos = filteredTodos.sort((a, b) => {
+      if (sortBy === 'dueDate') {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      } else if (sortBy === 'createdAt') {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return 0;
+    });
+  }
+
+  res.json(filteredTodos);
+});
+
+
+app.put('/todos/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, description, text, dueDate, category } = req.body;
+  const todoIndex = todos.findIndex((todo) => todo.id === id);
+
+  if (todoIndex === -1) {
+    return res.status(404).json({ message: 'Todo not found' });
+  }
+
+  const updatedTodo = {
+    ...todos[todoIndex],
+    title: title || todos[todoIndex].title,
+    description: description || todos[todoIndex].description,
+    text: text || todos[todoIndex].text,
+    dueDate: dueDate || todos[todoIndex].dueDate,
+    category: category || todos[todoIndex].category,
+    completed: completed !== undefined ? completed : todos[todoIndex].completed,
+  };
+
+  todos[todoIndex] = updatedTodo;
+  res.json(updatedTodo);
+});
+
+
+app.delete('/todos/:id', (req, res) => {
+  const { id } = req.params;
+
+  const todoIndex = todos.findIndex((todo) => todo.id === id);
+
+  if (todoIndex === -1) {
+    return res.status(404).json({ message: 'Todo not found' });
+  }
+
+  todos = todos.filter((todo) => todo.id !== id);
+  res.status(204).end();
+});
+
+// Start the server
 const PORT = process.env.PORT || 5000;
-
-//process.env.PORT
-//process.env.NODE_ENV => production or undefined
-
-
-
-
-// middleware
-app.use(express.json()); // giving us access to req.body so we can get JSON Data.
-app.use(cors());
-
-// app.use(express.static(path.join(__dirname, "client/build")));
-// app.use(express.static("./client/build"));
-
-if (process.env.NODE_ENV === "production") {
-  //server static content
-  //npm run build
-  app.use(express.static(path.join(__dirname, "client/build")))
-};
-
-// ROUTES //
-
-// CREATE A TODO
-app.post("/todos", async (req, res) => {
-  try {
-    const { description } = req.body;
-    const newTodo = await pool.query(
-      "INSERT INTO todo (description) VALUES($1) RETURNING *",
-      [description]
-    );
-
-    res.json(newTodo.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-  }
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-
-// GET ALL TODOS
-app.get("/todos", async (req, res) => {
-  try {
-    const allTodos = await pool.query("SELECT * FROM todo");
-    res.json(allTodos.rows);
-  } catch (err) {
-    console.error(err.message);
-  }
-});
-
-// GET A TODO
-app.get("/todos/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const todo = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
-      id,
-    ]);
-    res.json(todo.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-  }
-});
-
-// UPDATE A TODO
-app.put("/todos/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { description } = req.body;
-    const updateTodo = await pool.query(
-      "UPDATE todo SET description = $1 WHERE todo_id = $2",
-      [description, id]
-    );
-
-    res.json("Todo was updated!");
-  } catch (err) {
-    console.error(err.message);
-  }
-});
-
-// DELETE A TODO
-app.delete("/todos/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleteTodo = await pool.query("DELETE FROM todo WHERE todo_id = $1", [
-      id,
-    ]);
-    res.json("Todo was deleted!");
-  } catch (err) {
-    console.error(err.message);
-  }
-});
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build/index.html"));
-});
-
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

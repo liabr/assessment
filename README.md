@@ -20,7 +20,6 @@ Todo App using React, ExpressJS and PostGress
 
 * Prerequisites
   * Install Node.js
-  * Install [postgres]
 
 * Before starting the project, follow these steps to create project and get your server up and running:
 

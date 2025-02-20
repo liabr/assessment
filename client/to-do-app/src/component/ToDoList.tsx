@@ -1,3 +1,4 @@
+// src/TodoList.tsx
 import React from 'react';
 import { Box, Typography, Button, Checkbox } from '@mui/material';
 import { Todo } from '../types';
@@ -6,7 +7,6 @@ interface TodoListProps {
   todos: Todo[];
   onToggleComplete: (id: string) => void;
   onDeleteTodo: (id: string) => void;
-  onUpdateTodo: (id: string, updatedTodo: Partial<Todo>) => void;
   selectedCategory: string;
 }
 
@@ -16,7 +16,7 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onToggleComplete, onDeleteTo
   }
 
   return (
-    <Box sx={{ width: '150%' }} bgcolor={"primary"}>
+    <Box>
       {todos
         .filter(todo => !selectedCategory || todo.category === selectedCategory)
         .map(todo => (

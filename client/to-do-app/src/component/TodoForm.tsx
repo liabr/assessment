@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+import { TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Todo } from '../types';
 
 interface TodoFormProps {
@@ -11,6 +11,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ categories, onSubmit }) => {
   const [todo, setTodo] = useState<Omit<Todo, 'id' | 'createdAt'>>({
     title: '',
     description: '',
+    text: '',
     category: '',
     dueDate: '',
     completed: false,
@@ -29,6 +30,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ categories, onSubmit }) => {
       setTodo({
         title: '',
         description: '',
+        text: '',
         category: '',
         dueDate: '',
         completed: false,
@@ -37,7 +39,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ categories, onSubmit }) => {
   };
 
   return (
-    <Box bgcolor={"white"}>
+    <div>
       <TextField color='secondary'
         label="Title"
         name="title"
@@ -70,12 +72,12 @@ const TodoForm: React.FC<TodoFormProps> = ({ categories, onSubmit }) => {
         value={todo.dueDate}
         onChange={handleChange}
         fullWidth
-        margin="normal"              
+        margin="normal"       
       />
       <Button variant="contained" color="primary" onClick={handleSubmit}>
         Add Todo
       </Button>
-    </Box>
+    </div>
   );
 };
 
