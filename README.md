@@ -1,6 +1,6 @@
-# Todo App (PERN Stack - Postgres, Express, React, and Node)
+# Todo App (Express, React, Axios, TypeScript, Redux and Node)
 
-Todo App using React, ExpressJS and PostGress
+Todo App using React, ExpressJS and In Memory DB
 
 
 ## Built with:
@@ -9,7 +9,6 @@ Todo App using React, ExpressJS and PostGress
 * JavaScript
 * Node.js
 * Express
-* PostgreSQL
 * CORS - Cross-Origin Resource Sharing
 
 ## Deployed with:
@@ -23,16 +22,7 @@ Todo App using React, ExpressJS and PostGress
 
 * Before starting the project, follow these steps to create project and get your server up and running:
 
-  * `mkdir server` - starting our server
-  * `cd server`
-  * `npm init` - is going to keep track of all our packages inside the application
-  * `npm install express pg cors` - express allows us to quickly create a server in Node.js, cors allows different domain applications to interact with each other (server will be running on localhost:5000 & React App on localhost:3000, postgres is there to connect our server with our database in order to run postgres queries)
-  * `touch index.js` - require the libraries in this file, app.listen to start server, app.use to create middlewear (express, cors)
-  * `npm install -g nodemon`
-  * `nodemon index` - will watch index.js file, every time there's a change it will instantly restart it
-  * `cd client\to-do-app`
-  * `npx create-react-app client` - setting up client side with React
-  * `npm start` - to get client side started
+  Refer the readme for client. server directories
 
 
 
